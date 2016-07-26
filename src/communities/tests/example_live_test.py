@@ -38,13 +38,15 @@ class ExampleCommunityLiveTests(StaticLiveServerTestCase):
         self.assertEqual(path, self.get_current_path())
 
     def test_login(self):
-        url = self.full_url(self.community.get_absolute_url())
-        self.assert_current_path(reverse('login'))
         # from IPython import embed
         # embed()
+        url = self.full_url(self.community.get_absolute_url())
 
         login_url = self.full_url(reverse("login"))
         self.selenium.get(login_url)
+
+        self.assert_current_path(reverse('login'))
+
         username_input = self.selenium.find_element_by_id("id_username")
         username_input.send_keys(self.u1.email)
         password_input = self.selenium.find_element_by_id("id_password")
@@ -56,10 +58,3 @@ class ExampleCommunityLiveTests(StaticLiveServerTestCase):
 
         self.selenium.get(url)
         # raw_input()
-
-        # self.selenium.find_element_by_xpath('//input[@value="Log in"]').click()        self.selenium.get('%s%s' % (self.live_server_url, '/login/'))
-        # username_input = self.selenium.find_element_by_name("username")
-        # username_input.send_keys('myuser')
-        # password_input = self.selenium.find_element_by_name("password")
-        # password_input.send_keys('secret')
-        # self.selenium.find_element_by_xpath('//input[@value="Log in"]').click()
