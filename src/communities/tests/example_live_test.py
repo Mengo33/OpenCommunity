@@ -65,9 +65,21 @@ class ExampleCommunityLiveTests(StaticLiveServerTestCase):
 
         self.login(self.u1)
 
-    # def test_logout(self):
-    #     self.login(self.u1)
-    #     TODO
+    def test_logout(self):
+        # login for trying logout
+        self.login(self.u1)
+        # Flow of all clicking to logout
+        self.selenium.find_element_by_class_name('dropdown-toggle').click()
+        self.selenium.find_element_by_xpath('//a[@href="/logout/"]').click()
+        # self.selenium.find_element_by_xpath('//a[@class="dropdown-toggle"]').click()
+        # self.selenium.find_element_by_css_selector('a:last-child').click()
+
+        # Try enter to community page after logout.
+        url = self.full_url(self.community.get_absolute_url())
+        self.selenium.get(url)
+
+        # If now its redirect to login page, that's OK.
+        self.assert_current_path(reverse('login'))
 
     # from IPython import embed
     # embed()
