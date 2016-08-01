@@ -10,6 +10,8 @@ from selenium.common.exceptions import NoSuchElementException
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.core.urlresolvers import reverse
 from selenium.webdriver.chrome.webdriver import WebDriver
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support.ui import Select
 
 from communities.models import Community
 from users.models import OCUser
@@ -57,6 +59,11 @@ class ExampleCommunityLiveTests(StaticLiveServerTestCase):
         except NoSuchElementException:
             return False
         return True
+
+    @staticmethod
+    def type_tabs(element, num):
+        for i in range(0, num):
+            element.send_keys(Keys.TAB)
 
     def test_redirect_login(self):
         # self.selenium.maximize_window()
@@ -165,3 +172,23 @@ class ExampleCommunityLiveTests(StaticLiveServerTestCase):
     #     # self.assertTrue(self.selenium.find_element_by_xpath('//a[@href="{}main/"]'.format(
     #     #     self.community.get_absolute_url())))
 
+    def test_create_quick_new_meeting(self):
+        self.login(self.u1)
+        url = self.full_url(self.community.get_absolute_url())
+        self.selenium.get(url)
+        self.selenium.find_element_by_xpath('//a[@href="{}main/"]'.format(
+            self.community.get_absolute_url())
+        ).click()
+
+        # time.sleep(0.2)
+        self.selenium.find_element_by_xpath('//button[@data-url="{}main/upcoming/start/"]'.format(
+            self.community.get_absolute_url())).click()
+
+        # Move to the correct element by typing 12 tabs.
+        self.type_tabs(self.selenium.find_element_by_id("upcoming-meeting"), 12)
+        current_element = self.selenium.switch_to.active_element
+        current_element.send_keys(Keys.SPACE)
+
+        # If the link element 'Stop Meeting' is exist, Its OK.
+        time.sleep(0.3)
+        self.assertTrue(self.is_element_present(By.CLASS_NAME, "fa"))
