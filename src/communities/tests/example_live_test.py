@@ -12,6 +12,8 @@ from django.core.urlresolvers import reverse
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import Select
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as ec
 
 from communities.models import Community
 from users.models import OCUser
@@ -189,7 +191,7 @@ class ExampleCommunityLiveTests(StaticLiveServerTestCase):
         self.assertTrue(self.is_element_present(By.LINK_TEXT, "Restricted issue"))
         # self.assertTrue(self.is_element_present(By.XPATH, "//*[contains(text(), 'Restricted issue')]"))
 
-    def test_create_quick_new_meeting(self):
+    def test_start_new_meeting(self):
         self.login(self.u1)
         url = self.full_url(self.community.get_absolute_url())
         self.selenium.get(url)
@@ -209,3 +211,55 @@ class ExampleCommunityLiveTests(StaticLiveServerTestCase):
         # Test: If the link element 'Stop Meeting' is exist, Its OK.
         time.sleep(0.3)
         self.assertTrue(self.is_element_present(By.CLASS_NAME, "fa"))
+
+    def test_create_quick_new_proposal_for_issue(self):
+        self.login(self.u1)
+        url = self.full_url(self.community.get_absolute_url())
+        self.selenium.get(url)
+        self.selenium.find_element_by_xpath('//a[@href="{}main/"]'.format(
+            self.community.get_absolute_url())
+        ).click()
+        self.selenium.find_element_by_xpath(
+            '//input[@type="text"]').send_keys("Building a new road")
+        self.selenium.find_element_by_xpath('//button[@id="quick-issue-add"]').click()
+
+        # Add a quick proposal to the issue
+        button = WebDriverWait(self.selenium, 10).until(
+            ec.presence_of_element_located((
+                By.XPATH, '//a[@href="{}main/issues/1/"]'.format(self.community.get_absolute_url()))))
+        button.click()
+        self.selenium.find_element_by_xpath('//a[@href="{}main/issues/1/"]'.format(
+            self.community.get_absolute_url())
+        ).click()
+        self.selenium.find_element_by_id("quick-proposal-title").send_keys("New Proposal")
+        self.selenium.find_element_by_id("quick-proposal-add").click()
+
+        # Test: If there is a line with text "New Proposal", Its OK.
+        time.sleep(0.6)
+        self.assertTrue(self.is_element_present(By.XPATH, "//* [contains(text(), 'New Proposal')]"))
+
+    def test_create_new_draft_meeting(self):
+        self.login(self.u1)
+        url = self.full_url(self.community.get_absolute_url())
+        self.selenium.get(url)
+        self.selenium.find_element_by_xpath('//a[@href="{}main/"]'.format(
+            self.community.get_absolute_url())
+        ).click()
+
+        self.selenium.find_element_by_xpath('//a[@href="{}main/upcoming/edit/"]'.format(
+            self.community.get_absolute_url())).click()
+
+        title = WebDriverWait(self.selenium, 10).until(
+            ec.presence_of_element_located((By.ID, "id_upcoming_meeting_title"))
+        )
+        title.send_keys("Meeting Title")
+        self.selenium.find_element_by_id("id_upcoming_meeting_location").send_keys("Tel Aviv")
+        self.selenium.find_element_by_id("id_upcoming_meeting_scheduled_at_0").send_keys("01/01/2017")
+        self.selenium.find_element_by_id("id_upcoming_meeting_scheduled_at_1").send_keys("02:00PM", Keys.TAB)
+        current_element = self.selenium.switch_to.active_element
+        current_element.send_keys("Background...")
+        self.selenium.find_element_by_xpath('//input[@type="submit"]').click()
+
+        # Test: If there is a h1 title "Meeting Title", Its OK.
+        time.sleep(0.6)
+        self.assertTrue(self.is_element_present(By.XPATH, "//* [contains(text(), 'Meeting Title')]"))
