@@ -24,6 +24,7 @@ class ExampleCommunityLiveTests(StaticLiveServerTestCase):
     def setUpClass(cls):
         super(ExampleCommunityLiveTests, cls).setUpClass()
         cls.selenium = WebDriver()
+        cls.selenium.maximize_window()
 
     @classmethod
     def tearDownClass(cls):
@@ -69,7 +70,6 @@ class ExampleCommunityLiveTests(StaticLiveServerTestCase):
             element.send_keys(Keys.TAB)
 
     def test_redirect_login(self):
-        # self.selenium.maximize_window()
         url = self.full_url(self.community.get_absolute_url())
         self.selenium.get(url)
         # time.sleep(2)
@@ -226,11 +226,9 @@ class ExampleCommunityLiveTests(StaticLiveServerTestCase):
         # Add a quick proposal to the issue
         button = WebDriverWait(self.selenium, 10).until(
             ec.presence_of_element_located((
-                By.XPATH, '//a[@href="{}main/issues/1/"]'.format(self.community.get_absolute_url()))))
+                By.LINK_TEXT, 'Building a new road')))
         button.click()
-        self.selenium.find_element_by_xpath('//a[@href="{}main/issues/1/"]'.format(
-            self.community.get_absolute_url())
-        ).click()
+        # self.selenium.find_element_by_link_text("Building a new road").click()
         self.selenium.find_element_by_id("quick-proposal-title").send_keys("New Proposal")
         self.selenium.find_element_by_id("quick-proposal-add").click()
 
