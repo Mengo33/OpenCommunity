@@ -71,9 +71,10 @@ class ExampleCommunityLiveTests(StaticLiveServerTestCase):
         url = self.full_url(self.community.get_absolute_url())
         self.selenium.get(url)
         # time.sleep(2)
-        self.assert_current_path(reverse('login'))
 
-        self.login(self.u1)
+        # Test: If there is 'login' in the URL, its OK.
+        self.assert_current_path(reverse('login'))
+        # self.login(self.u1)
 
     def test_community_is_open_for_superuser(self):
         # login by superuser
@@ -81,11 +82,11 @@ class ExampleCommunityLiveTests(StaticLiveServerTestCase):
         # Try enter to community page
         url = self.full_url(self.community.get_absolute_url())
         self.selenium.get(url)
-        # If the status code is 200 its OK. TODO
+        # If the status code is 200 its OK.
         # r = requests.get(url)
         # self.assertEquals(r.status_code, 200)
 
-        # If the link element 'Committee' is exist, Its OK.
+        # Test: If the link element 'Committee' is exist, Its OK.
         # time.sleep(0.2)
         self.assertTrue(self.is_element_present(By.XPATH, '//a[@href="{}main/"]'.format(
             self.community.get_absolute_url())))
@@ -102,7 +103,7 @@ class ExampleCommunityLiveTests(StaticLiveServerTestCase):
         url = self.full_url(self.community.get_absolute_url())
         self.selenium.get(url)
 
-        # If now its redirect to login page, that's OK.
+        # Test: If now its redirect to login page, that's OK.
         self.assert_current_path(reverse('login'))
 
     # def test_community_is_visible_for_superuser(self): TODO
@@ -123,7 +124,7 @@ class ExampleCommunityLiveTests(StaticLiveServerTestCase):
             '//input[@type="text"]').send_keys("Building a new road")
         self.selenium.find_element_by_xpath('//button[@id="quick-issue-add"]').click()
 
-        # If there is at least one element of 'Issue' in line, Its OK.
+        # Test: If there is at least one element of 'Issue' in line, Its OK.
         time.sleep(0.2)
         agenda_lines = self.selenium.find_elements_by_xpath('//ul[@id="agenda"]')
         self.assertTrue(len(agenda_lines) > 0)
@@ -149,10 +150,44 @@ class ExampleCommunityLiveTests(StaticLiveServerTestCase):
         current_element = self.selenium.switch_to.active_element
         current_element.send_keys(Keys.SPACE)
 
-        # If there is at least one element of 'Issue' in line, Its OK.
+        # Test: If there is at least one element of 'Issue' in line, Its OK.
         time.sleep(0.5)
         agenda_lines = self.selenium.find_elements_by_xpath('//ul[@id="agenda"]')
         self.assertTrue(len(agenda_lines) > 0)
+
+    def test_create_new_restricted_issue_for_new_meeting(self):
+        self.login(self.u1)
+        url = self.full_url(self.community.get_absolute_url())
+        self.selenium.get(url)
+        self.selenium.find_element_by_xpath('//a[@href="{}main/"]'.format(
+            self.community.get_absolute_url())
+        ).click()
+        self.selenium.find_element_by_xpath('//a[@href="{}main/issues/upcoming-create/"]'.format(
+            self.community.get_absolute_url())
+        ).click()
+
+        # Choose to be restricted issue by clicking on reason 2.
+        time.sleep(0.25)
+        self.type_tabs(self.selenium.find_element_by_id("upcoming-meeting"), 5)
+        current_element = self.selenium.switch_to.active_element
+        current_element.send_keys(Keys.ENTER)
+        self.selenium.find_element_by_xpath('//label[@for="id_confidential_reason_2"]').click()
+
+        # Filling up all the fields just to be sure everything is ok.
+        time.sleep(0.25)
+        self.type_tabs(self.selenium.find_element_by_id("upcoming-meeting"), 1)
+        current_element = self.selenium.switch_to.active_element
+        current_element.send_keys("Restricted issue", Keys.TAB)
+        current_element = self.selenium.switch_to.active_element
+        current_element.send_keys("Restricted issue for example..")
+        self.type_tabs(self.selenium.find_element_by_id("upcoming-meeting"), 6)
+        current_element = self.selenium.switch_to.active_element
+        current_element.send_keys(Keys.SPACE)
+
+        # Test: If there is a link text "Restricted issue", Its OK.
+        time.sleep(0.6)
+        self.assertTrue(self.is_element_present(By.LINK_TEXT, "Restricted issue"))
+        # self.assertTrue(self.is_element_present(By.XPATH, "//*[contains(text(), 'Restricted issue')]"))
 
     def test_create_quick_new_meeting(self):
         self.login(self.u1)
@@ -171,6 +206,6 @@ class ExampleCommunityLiveTests(StaticLiveServerTestCase):
         current_element = self.selenium.switch_to.active_element
         current_element.send_keys(Keys.SPACE)
 
-        # If the link element 'Stop Meeting' is exist, Its OK.
+        # Test: If the link element 'Stop Meeting' is exist, Its OK.
         time.sleep(0.3)
         self.assertTrue(self.is_element_present(By.CLASS_NAME, "fa"))
