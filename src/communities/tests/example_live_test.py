@@ -63,12 +63,6 @@ class ExampleCommunityLiveTests(StaticLiveServerTestCase):
             return False
         return True
 
-    @staticmethod
-    def type_tabs(element, num):
-        for i in range(0, num):
-            # time.sleep(0.5)
-            element.send_keys(Keys.TAB)
-
     def test_redirect_login(self):
         url = self.full_url(self.community.get_absolute_url())
         self.selenium.get(url)
@@ -142,15 +136,13 @@ class ExampleCommunityLiveTests(StaticLiveServerTestCase):
             self.community.get_absolute_url())
         ).click()
 
-        time.sleep(0.25)
-        self.type_tabs(self.selenium.find_element_by_id("upcoming-meeting"), 6)
-        current_element = self.selenium.switch_to.active_element
-        current_element.send_keys("Building a new road", Keys.TAB)
+        title = WebDriverWait(self.selenium, 10).until(
+            ec.presence_of_element_located((By.ID, "id_title"))
+        )
+        title.send_keys("Building a new road", Keys.TAB)
         current_element = self.selenium.switch_to.active_element
         current_element.send_keys("The Kibutz needs a new access road from the other side..")
-        self.type_tabs(self.selenium.find_element_by_id("upcoming-meeting"), 6)
-        current_element = self.selenium.switch_to.active_element
-        current_element.send_keys(Keys.SPACE)
+        self.selenium.find_element_by_xpath('//input[@type="submit"]').click()
 
         # Test: If there is at least one element of 'Issue' in line, Its OK.
         time.sleep(0.5)
@@ -169,29 +161,24 @@ class ExampleCommunityLiveTests(StaticLiveServerTestCase):
         ).click()
 
         # Choose to be restricted issue by clicking on reason 2.
-        time.sleep(0.25)
-        self.type_tabs(self.selenium.find_element_by_id("upcoming-meeting"), 5)
-        current_element = self.selenium.switch_to.active_element
-        current_element.send_keys(Keys.ENTER)
+        restricted_toggle = WebDriverWait(self.selenium, 10).until(
+            ec.presence_of_element_located((By.CLASS_NAME, 'issue-btn-confidential'))
+        )
+        restricted_toggle.send_keys(Keys.ENTER)
         self.selenium.find_element_by_xpath('//label[@for="id_confidential_reason_2"]').click()
 
         # Filling up all the fields just to be sure everything is ok.
-        time.sleep(0.25)
-        self.type_tabs(self.selenium.find_element_by_id("upcoming-meeting"), 1)
-        current_element = self.selenium.switch_to.active_element
-        current_element.send_keys("Restricted issue", Keys.TAB)
+        self.selenium.find_element_by_id("id_title").send_keys("Restricted issue", Keys.TAB)
         current_element = self.selenium.switch_to.active_element
         current_element.send_keys("Restricted issue for example..")
-        self.type_tabs(self.selenium.find_element_by_id("upcoming-meeting"), 6)
-        current_element = self.selenium.switch_to.active_element
-        current_element.send_keys(Keys.SPACE)
+        self.selenium.find_element_by_xpath('//input[@type="submit"]').click()
 
         # Test: If there is a link text "Restricted issue", Its OK.
         time.sleep(0.6)
         self.assertTrue(self.is_element_present(By.LINK_TEXT, "Restricted issue"))
         # self.assertTrue(self.is_element_present(By.XPATH, "//*[contains(text(), 'Restricted issue')]"))
 
-    def test_start_new_meeting(self):
+    def test_start_new_quick_meeting(self):
         self.login(self.u1)
         url = self.full_url(self.community.get_absolute_url())
         self.selenium.get(url)
@@ -203,10 +190,11 @@ class ExampleCommunityLiveTests(StaticLiveServerTestCase):
         self.selenium.find_element_by_xpath('//button[@data-url="{}main/upcoming/start/"]'.format(
             self.community.get_absolute_url())).click()
 
-        # Move to the correct element by typing 12 tabs.
-        self.type_tabs(self.selenium.find_element_by_id("upcoming-meeting"), 12)
-        current_element = self.selenium.switch_to.active_element
-        current_element.send_keys(Keys.SPACE)
+        # Click on "Start Meeting" button.
+        restricted_toggle = WebDriverWait(self.selenium, 10).until(
+            ec.presence_of_element_located((By.XPATH, '//input[@type="submit"]'))
+        )
+        restricted_toggle.click()
 
         # Test: If the link element 'Stop Meeting' is exist, Its OK.
         time.sleep(0.3)
