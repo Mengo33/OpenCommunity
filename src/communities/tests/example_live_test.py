@@ -63,6 +63,7 @@ class ExampleCommunityLiveTests(StaticLiveServerTestCase):
     @staticmethod
     def type_tabs(element, num):
         for i in range(0, num):
+            # time.sleep(0.5)
             element.send_keys(Keys.TAB)
 
     def test_redirect_login(self):
@@ -122,55 +123,36 @@ class ExampleCommunityLiveTests(StaticLiveServerTestCase):
             '//input[@type="text"]').send_keys("Building a new road")
         self.selenium.find_element_by_xpath('//button[@id="quick-issue-add"]').click()
 
-        # If the link element 'Issue' is exist, Its OK.
+        # If there is at least one element of 'Issue' in line, Its OK.
         time.sleep(0.2)
-        self.assertTrue(self.is_element_present(By.XPATH, '//a[@href="{}main/issues/1/"]'.format(
-            self.community.get_absolute_url())))
+        agenda_lines = self.selenium.find_elements_by_xpath('//ul[@id="agenda"]')
+        self.assertTrue(len(agenda_lines) > 0)
 
-    # def test_create_lazy_new_issue_for_new_meeting(self): TODO
-    #     self.login(self.u1)
-    #     url = self.full_url(self.community.get_absolute_url())
-    #     self.selenium.get(url)
-    #     self.selenium.find_element_by_xpath('//a[@href="{}main/"]'.format(
-    #         self.community.get_absolute_url())
-    #     ).click()
-    #     self.selenium.find_element_by_xpath('//a[@href="{}main/issues/upcoming-create/"]'.format(
-    #         self.community.get_absolute_url())
-    #     ).click()
-    #
-    #     # div_modal_content = self.selenium.find_element_by_class_name("modal-dialog").click()
-    #     # form = self.selenium.find_element_by_xpath('//form[@method="post"]')
-    #     # # self.selenium.switch_to_window(form)
-    #     self.selenium.find_element_by_xpath(
-    #         '//input[@type="text"]').send_keys("Building a new road")
-    #     # raw_input()
-    #
-    #     html_area = div_modal_content.find_element_by_class_name("htmlarea")
-    #     iframe = self.selenium.find_element_by_xpath('//iframe[@class="wysihtml5-sandbox"]')
-    #     self.selenium.switch_to_frame(iframe)
-    #     self.selenium.find_element_by_xpath('//body[@class="form-control wysihtml5-editor"]').send_keys(
-    #         "The Kibutz needs a new access road from the other side.."
-    #     )
-    #     self.selenium.find_element_by_class_name(
-    #         "form-control wysihtml5-editor").send_keys(
-    #         "The Kibutz needs a new access road from the other side..")
-    #     self.selenium.find_element_by_css_selector("ul li:last-child").click()
-    #     self.selenium.find_element_by_id("id_proposal-title").send_keys("Rent a building contractor")
-    #     self.selenium.find_element_by_class_name(
-    #         "form-control wysihtml5-editor").send_keys(
-    #         "Needs to talk with a building contractor about the new road building program..")
-    #     self.selenium.find_element_by_id("id_proposal-assigned_to").send_keys("menahem")
-    #     self.selenium.find_element_by_id("id_proposal-due_by").send_keys("08/25/2016")
-    #     form.find_element_by_xpath('//input[@type="submit"]').click()
-    #     self.selenium.find_element_by_xpath('//button[@id="quick-issue-add"]').click()
-    #     # raw_input()
-    #     time.sleep(0.2)
-    #
-    #     self.assertTrue(self.is_element_present(By.XPATH, '//a[@href="{}main/issues/1/"]'.format(
-    #                         self.community.get_absolute_url())))
-    #
-    #     # self.assertTrue(self.selenium.find_element_by_xpath('//a[@href="{}main/"]'.format(
-    #     #     self.community.get_absolute_url())))
+    def test_create_lazy_new_issue_for_new_meeting(self):
+        self.login(self.u1)
+        url = self.full_url(self.community.get_absolute_url())
+        self.selenium.get(url)
+        self.selenium.find_element_by_xpath('//a[@href="{}main/"]'.format(
+            self.community.get_absolute_url())
+        ).click()
+        self.selenium.find_element_by_xpath('//a[@href="{}main/issues/upcoming-create/"]'.format(
+            self.community.get_absolute_url())
+        ).click()
+
+        time.sleep(0.25)
+        self.type_tabs(self.selenium.find_element_by_id("upcoming-meeting"), 6)
+        current_element = self.selenium.switch_to.active_element
+        current_element.send_keys("Building a new road", Keys.TAB)
+        current_element = self.selenium.switch_to.active_element
+        current_element.send_keys("The Kibutz needs a new access road from the other side..")
+        self.type_tabs(self.selenium.find_element_by_id("upcoming-meeting"), 6)
+        current_element = self.selenium.switch_to.active_element
+        current_element.send_keys(Keys.SPACE)
+
+        # If there is at least one element of 'Issue' in line, Its OK.
+        time.sleep(0.5)
+        agenda_lines = self.selenium.find_elements_by_xpath('//ul[@id="agenda"]')
+        self.assertTrue(len(agenda_lines) > 0)
 
     def test_create_quick_new_meeting(self):
         self.login(self.u1)
@@ -180,7 +162,7 @@ class ExampleCommunityLiveTests(StaticLiveServerTestCase):
             self.community.get_absolute_url())
         ).click()
 
-        # time.sleep(0.2)
+        # Click on button of "Start Meeting"
         self.selenium.find_element_by_xpath('//button[@data-url="{}main/upcoming/start/"]'.format(
             self.community.get_absolute_url())).click()
 
