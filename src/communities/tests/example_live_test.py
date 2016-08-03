@@ -45,7 +45,7 @@ class ExampleCommunityLiveTests(StaticLiveServerTestCase):
         self.community = Community.objects.create(
             name="Kibbutz Broken Dream",
         )
-        self.u1 = OCUser.objects.create_superuser("menahem@dream.org", "Menahem", "secret")
+        self.u1 = OCUser.objects.create_superuser("menahem.godick@gmail.com", "Menahem", "secret")
 
     def full_url(self, s):
         return self.live_server_url + s
@@ -207,6 +207,8 @@ class ExampleCommunityLiveTests(StaticLiveServerTestCase):
         self.selenium.find_element_by_xpath('//a[@href="{}main/"]'.format(
             self.community.get_absolute_url())
         ).click()
+
+        # Add a quick issue to the meeting
         self.selenium.find_element_by_xpath(
             '//input[@type="text"]').send_keys("Building a new road")
         self.selenium.find_element_by_xpath('//button[@id="quick-issue-add"]').click()
@@ -249,3 +251,156 @@ class ExampleCommunityLiveTests(StaticLiveServerTestCase):
         # Test: If there is a h1 title "Meeting Title", Its OK.
         time.sleep(0.6)
         self.assertTrue(self.is_element_present(By.XPATH, "//* [contains(text(), 'Meeting Title')]"))
+
+    def test_publish_meeting_to_me_only(self):
+        self.login(self.u1)
+        url = self.full_url(self.community.get_absolute_url())
+        self.selenium.get(url)
+
+        # Navigate to committee page.
+        self.selenium.find_element_by_xpath('//a[@href="{}main/"]'.format(
+            self.community.get_absolute_url())
+        ).click()
+
+        self.selenium.find_element_by_xpath('//a[@href="{}main/upcoming/edit/"]'.format(
+            self.community.get_absolute_url())).click()
+
+        title = WebDriverWait(self.selenium, 10).until(
+            ec.presence_of_element_located((By.ID, "id_upcoming_meeting_title"))
+        )
+        title.send_keys("Meeting Title")
+        self.selenium.find_element_by_id("id_upcoming_meeting_location").send_keys("Tel Aviv")
+        self.selenium.find_element_by_id("id_upcoming_meeting_scheduled_at_0").send_keys("01/01/2017")
+        self.selenium.find_element_by_id("id_upcoming_meeting_scheduled_at_1").send_keys("02:00PM", Keys.TAB)
+        current_element = self.selenium.switch_to.active_element
+        current_element.send_keys("Background...")
+        self.selenium.find_element_by_xpath('//input[@type="submit"]').click()
+
+        # Test: If there is a h1 title "Meeting Title", Its OK.
+        time.sleep(0.6)
+        self.assertTrue(self.is_element_present(By.XPATH, "//* [contains(text(), 'Meeting Title')]"))
+
+        # Add a quick issue to the meeting
+        self.selenium.find_element_by_xpath(
+            '//input[@type="text"]').send_keys("Building a new road")
+        self.selenium.find_element_by_xpath('//button[@id="quick-issue-add"]').click()
+
+        # Test: If there is at least one element of 'Issue' in line, Its OK.
+        time.sleep(0.2)
+        agenda_lines = self.selenium.find_elements_by_xpath('//ul[@id="agenda"]')
+        self.assertTrue(len(agenda_lines) > 0)
+
+        # Add a quick proposal to the issue
+        button = WebDriverWait(self.selenium, 10).until(
+            ec.presence_of_element_located((
+                By.LINK_TEXT, 'Building a new road')))
+        button.click()
+        # self.selenium.find_element_by_link_text("Building a new road").click()
+        self.selenium.find_element_by_id("quick-proposal-title").send_keys("New Proposal")
+        self.selenium.find_element_by_id("quick-proposal-add").click()
+
+        # Test: If there is a line with text "New Proposal", Its OK.
+        time.sleep(0.6)
+        self.assertTrue(self.is_element_present(By.XPATH, "//* [contains(text(), 'New Proposal')]"))
+
+        # Navigate to committee page.
+        self.selenium.find_element_by_xpath('//a[@href="{}main/"]'.format(
+            self.community.get_absolute_url())
+        ).click()
+
+        # Click on publish button.
+        self.selenium.find_element_by_xpath('//a[@href="{}main/upcoming/publish/"]'.format(
+            self.community.get_absolute_url())).click()
+
+        # Select "only me" option in popup form.
+        form_select_me = WebDriverWait(self.selenium, 10).until(
+            ec.presence_of_element_located((By.ID, "id_me"))
+        )
+        form_select_me.send_keys(Keys.SPACE)
+
+        # Click on publish button in popup form.
+        self.selenium.find_element_by_css_selector('input[type="submit"][value="Publish"]').click()
+
+        # Test: If there is a li class = "info", Its OK.
+        time.sleep(1)
+        self.assertTrue(self.is_element_present(
+            By.CLASS_NAME, "info"))
+
+    # def test_print_preview_meeting(self): TODO
+    #     self.login(self.u1)
+    #     url = self.full_url(self.community.get_absolute_url())
+    #     self.selenium.get(url)
+    #
+    #     # Navigate to committee page.
+    #     self.selenium.find_element_by_xpath('//a[@href="{}main/"]'.format(
+    #         self.community.get_absolute_url())
+    #     ).click()
+    #
+    #     self.selenium.find_element_by_xpath('//a[@href="{}main/upcoming/edit/"]'.format(
+    #         self.community.get_absolute_url())).click()
+    #
+    #     title = WebDriverWait(self.selenium, 10).until(
+    #         ec.presence_of_element_located((By.ID, "id_upcoming_meeting_title"))
+    #     )
+    #     title.send_keys("Meeting Title")
+    #     self.selenium.find_element_by_id("id_upcoming_meeting_location").send_keys("Tel Aviv")
+    #     self.selenium.find_element_by_id("id_upcoming_meeting_scheduled_at_0").send_keys("01/01/2017")
+    #     self.selenium.find_element_by_id("id_upcoming_meeting_scheduled_at_1").send_keys("02:00PM", Keys.TAB)
+    #     current_element = self.selenium.switch_to.active_element
+    #     current_element.send_keys("Background...")
+    #     self.selenium.find_element_by_xpath('//input[@type="submit"]').click()
+    #
+    #     # Test: If there is a h1 title "Meeting Title", Its OK.
+    #     time.sleep(0.6)
+    #     self.assertTrue(self.is_element_present(By.XPATH, "//* [contains(text(), 'Meeting Title')]"))
+    #
+    #     # Add a quick issue to the meeting
+    #     self.selenium.find_element_by_xpath(
+    #         '//input[@type="text"]').send_keys("Building a new road")
+    #     self.selenium.find_element_by_xpath('//button[@id="quick-issue-add"]').click()
+    #
+    #     # Test: If there is at least one element of 'Issue' in line, Its OK.
+    #     time.sleep(0.2)
+    #     agenda_lines = self.selenium.find_elements_by_xpath('//ul[@id="agenda"]')
+    #     self.assertTrue(len(agenda_lines) > 0)
+    #
+    #     # Add a quick proposal to the issue
+    #     button = WebDriverWait(self.selenium, 10).until(
+    #         ec.presence_of_element_located((
+    #             By.LINK_TEXT, 'Building a new road')))
+    #     button.click()
+    #     # self.selenium.find_element_by_link_text("Building a new road").click()
+    #     self.selenium.find_element_by_id("quick-proposal-title").send_keys("New Proposal")
+    #     self.selenium.find_element_by_id("quick-proposal-add").click()
+    #
+    #     # Test: If there is a line with text "New Proposal", Its OK.
+    #     time.sleep(0.6)
+    #     self.assertTrue(self.is_element_present(By.XPATH, "//* [contains(text(), 'New Proposal')]"))
+    #
+    #     # Navigate to committee page.
+    #     self.selenium.find_element_by_xpath('//a[@href="{}main/"]'.format(
+    #         self.community.get_absolute_url())
+    #     ).click()
+    #
+    #     # Click on publish button.
+    #     self.selenium.find_element_by_xpath('//a[@href="{}main/upcoming/publish/"]'.format(
+    #         self.community.get_absolute_url())).click()
+    #
+    #     # Click on preview draft button in popup form.
+    #     preview_draft_button = WebDriverWait(self.selenium, 10).until(
+    #         ec.presence_of_element_located((
+    #             By.CSS_SELECTOR, 'button[type="button"][data-target="#protocolPreview"]'))
+    #     )
+    #     preview_draft_button.click()
+    #
+    #     # Click on print draft button in popup form.
+    #     time.sleep(0.2)
+    #     self.selenium.find_element_by_css_selector('button[type="button"][onclick="printProtocol();"]').click()
+    #
+    #     # current_element = self.selenium.switch_to.active_element
+    #     # current_element.send_keys(Keys.SPACE)
+    #     # raw_input()
+    #     # # Test: If there is a li class = "info", Its OK.
+    #     # time.sleep(1)
+    #     # self.assertTrue(self.is_element_present(
+    #     #     By.CLASS_NAME, "info"))
